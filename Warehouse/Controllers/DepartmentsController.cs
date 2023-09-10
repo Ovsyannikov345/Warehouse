@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Models;
 
@@ -28,6 +23,7 @@ namespace Warehouse.Controllers
             {
                 return NotFound();
             }
+
             return await _context.Departments.ToListAsync();
         }
 
@@ -39,6 +35,7 @@ namespace Warehouse.Controllers
             {
                 return NotFound();
             }
+
             var department = await _context.Departments.FindAsync(id);
 
             if (department == null)
@@ -87,6 +84,7 @@ namespace Warehouse.Controllers
             {
                 return Problem("Entity set 'ApplicationContext.Departments'  is null.");
             }
+
             _context.Departments.Add(department);
             await _context.SaveChangesAsync();
 
@@ -101,7 +99,9 @@ namespace Warehouse.Controllers
             {
                 return NotFound();
             }
+
             var department = await _context.Departments.FindAsync(id);
+
             if (department == null)
             {
                 return NotFound();
