@@ -17,33 +17,51 @@ namespace Warehouse.Controllers
 
         // GET: api/Products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<IEnumerable<ProductGetDto>>> GetProducts()
         {
             if (_context.Products == null)
             {
                 return NotFound();
             }
 
-            return await _context.Products.ToListAsync();
+            return await _context.Products.Select(prod => new ProductGetDto
+            {
+                Id = prod.Id,
+                Name = prod.Name,
+                Department = new DepartmentGetDto
+                {
+                    Id = prod.Department!.Id,
+                    Name = prod.Department.Name,
+                }
+            }).ToListAsync();
         }
 
         // GET: api/Products/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<ProductGetDto>> GetProduct(int id)
         {
             if (_context.Products == null)
             {
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products.Include(prod => prod.Department).FirstOrDefaultAsync(prod => prod.Id == id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            return product;
+            return new ProductGetDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Department = new DepartmentGetDto
+                {
+                    Id = product.Department!.Id,
+                    Name = product.Department.Name,
+                }
+            };
         }
 
         // PUT: api/Products/5
@@ -78,17 +96,23 @@ namespace Warehouse.Controllers
 
         // POST: api/Products
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<Product>> PostProduct(ProductPostDto product)
         {
             if (_context.Products == null)
             {
                 return Problem("Entity set 'ApplicationContext.Products'  is null.");
             }
 
-            _context.Products.Add(product);
+            var createdProduct = new Product
+            {
+                Name = product.Name,
+                DepartmentId = product.DepartmentId,
+            };
+
+            _context.Products.Add(createdProduct);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+            return Ok(createdProduct);
         }
 
         // DELETE: api/Products/5

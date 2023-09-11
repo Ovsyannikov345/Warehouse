@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.Intrinsics.Arm;
 using Warehouse.Models;
 
 namespace Warehouse.Controllers
@@ -17,33 +18,67 @@ namespace Warehouse.Controllers
 
         // GET: api/Departments
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Department>>> GetDepartments()
+        public async Task<ActionResult<IEnumerable<DepartmentGetDto>>> GetDepartments()
         {
             if (_context.Departments == null)
             {
                 return NotFound();
             }
 
-            return await _context.Departments.ToListAsync();
+            var departments = await _context.Departments.Select(dep => new DepartmentGetDto
+            {
+                Id = dep.Id,
+                Name = dep.Name,
+                Products = dep.Products.Select(prod => new ProductGetDto
+                {
+                    Id = prod.Id,
+                    Name = prod.Name
+                }).ToList(),
+                Workers = dep.Workers.Select(worker => new WorkerGetDto
+                {
+                    Id = worker.Id,
+                    FirstName = worker.FirstName,
+                    LastName = worker.LastName,
+                }).ToList(),
+            }).ToListAsync();
+
+            return departments;
         }
 
         // GET: api/Departments/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Department>> GetDepartment(int id)
+        public async Task<ActionResult<DepartmentGetDto>> GetDepartment(int id)
         {
             if (_context.Departments == null)
             {
                 return NotFound();
             }
 
-            var department = await _context.Departments.FindAsync(id);
+            var department = await _context.Departments.Include(dep => dep.Products)
+                                                       .Include(dep => dep.Workers)
+                                                       .FirstOrDefaultAsync(dep => dep.Id == id);
 
             if (department == null)
             {
                 return NotFound();
             }
 
-            return department;
+            return new DepartmentGetDto
+            {
+                Id = department.Id,
+                Name = department.Name,
+                Products = department.Products.Select(prod => new ProductGetDto
+                {
+                    Id = prod.Id,
+                    Name = prod.Name
+                }).ToList(),
+                Workers = department.Workers.Select(worker => new WorkerGetDto
+                {
+                    Id = worker.Id,
+                    FirstName = worker.FirstName,
+                    LastName = worker.LastName,
+                }).ToList(),
+            };
         }
 
         // PUT: api/Departments/5
@@ -78,17 +113,22 @@ namespace Warehouse.Controllers
 
         // POST: api/Departments
         [HttpPost]
-        public async Task<ActionResult<Department>> PostDepartment(Department department)
+        public async Task<ActionResult<Department>> PostDepartment(DepartmentPostDto department)
         {
             if (_context.Departments == null)
             {
                 return Problem("Entity set 'ApplicationContext.Departments'  is null.");
             }
 
-            _context.Departments.Add(department);
+            var createdDepartment = new Department
+            {
+                Name = department.Name,
+            };
+
+            _context.Departments.Add(createdDepartment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetDepartment), new { id = department.Id }, department);
+            return Ok(createdDepartment);
         }
 
         // DELETE: api/Departments/5

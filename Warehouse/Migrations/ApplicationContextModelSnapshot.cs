@@ -114,12 +114,17 @@ namespace Warehouse.Migrations
             modelBuilder.Entity("Warehouse.Models.Product", b =>
                 {
                     b.HasOne("Warehouse.Models.Department", "Department")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("DepartmentID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("Warehouse.Models.Department", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

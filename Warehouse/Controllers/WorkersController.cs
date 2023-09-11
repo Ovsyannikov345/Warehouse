@@ -17,33 +17,54 @@ namespace Warehouse.Controllers
 
         // GET: api/Workers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Worker>>> GetWorkers()
+        public async Task<ActionResult<IEnumerable<WorkerGetDto>>> GetWorkers()
         {
             if (_context.Workers == null)
             {
                 return NotFound();
             }
 
-            return await _context.Workers.ToListAsync();
+            return await _context.Workers.Include(w => w.Departments)
+            .Select(worker => new WorkerGetDto
+            {
+                Id = worker.Id,
+                FirstName = worker.FirstName,
+                LastName = worker.LastName,
+                Departments = worker.Departments.Select(d => new DepartmentGetDto
+                {
+                    Id = d.Id,
+                    Name = d.Name,
+                }).ToList(),
+            }).ToListAsync();
         }
 
         // GET: api/Workers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Worker>> GetWorker(int id)
+        public async Task<ActionResult<WorkerGetDto>> GetWorker(int id)
         {
             if (_context.Workers == null)
             {
                 return NotFound();
             }
 
-            var worker = await _context.Workers.FindAsync(id);
+            var worker = await _context.Workers.Include(worker => worker.Departments).FirstOrDefaultAsync(worker => worker.Id == id);
 
             if (worker == null)
             {
                 return NotFound();
             }
 
-            return worker;
+            return new WorkerGetDto
+            {
+                Id = worker.Id,
+                FirstName = worker.FirstName,
+                LastName = worker.LastName,
+                Departments = worker.Departments.Select(dep => new DepartmentGetDto
+                {
+                    Id = dep.Id,
+                    Name = dep.Name,
+                }).ToList()
+            };
         }
 
         // PUT: api/Workers/5
@@ -78,17 +99,28 @@ namespace Warehouse.Controllers
 
         // POST: api/Workers
         [HttpPost]
-        public async Task<ActionResult<Worker>> PostWorker(Worker worker)
+        public async Task<ActionResult<Worker>> PostWorker(WorkerPostDto worker)
         {
             if (_context.Workers == null)
             {
                 return Problem("Entity set 'ApplicationContext.Workers'  is null.");
             }
 
-            _context.Workers.Add(worker);
+            var departments = _context.Departments;
+
+            Worker createdWorker = new Worker
+            {
+                FirstName = worker.FirstName,
+                LastName = worker.LastName,
+                Departments = worker.Departments.Select(dep => departments.FirstOrDefault(x => x.Id == dep.Id))
+                                                .Where(dep => dep != null)
+                                                .ToList()!,
+            };
+
+            _context.Workers.Add(createdWorker);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetWorker), new { id = worker.Id }, worker);
+            return Ok(worker);
         }
 
         // DELETE: api/Workers/5

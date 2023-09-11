@@ -1,13 +1,11 @@
 ﻿namespace Warehouse.Models
 {
-    public class Product
+    public class ProductGetDto
     {
         public int Id { get; set; }
 
         public string Name { get; set; } = "";
 
-        public int DepartmentId { get; set; }
-
-        public Department? Department { get; set; }
+        public DepartmentGetDto? Department { get; set; }
     }
 }
