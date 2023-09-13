@@ -69,32 +69,56 @@ namespace Warehouse.Controllers
 
         // PUT: api/Workers/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutWorker(int id, Worker worker)
+        public async Task<IActionResult> PutWorker(int id, WorkerPutDto workerDto)
         {
-            if (id != worker.Id)
+            if (id != workerDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(worker).State = EntityState.Modified;
+            var worker = _context.Workers.Include(worker => worker.Departments)
+                                         .FirstOrDefault(worker => worker.Id == id);
+            
+            if (worker == null)
+            {
+                return NotFound();
+            }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!WorkerExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            worker.FirstName = workerDto.FirstName;
+            worker.LastName = workerDto.LastName;
+
+            var departmentsIds = workerDto.DepartmentIds.Select(dep => dep.Id);
+
+            await UpdateDepartments(worker, departmentsIds);
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
+
+            async Task<IActionResult> UpdateDepartments(Worker worker, IEnumerable<int> departmentIds)
+            {
+                // Removing departments.
+                worker.Departments.RemoveAll(dep => !departmentIds.Contains(dep.Id));
+
+                // Adding departments.
+                var currentDepartmentIds = worker.Departments.Select(dep => dep.Id);
+
+                var additionalDepartmentIds = departmentIds.Except(currentDepartmentIds);
+
+                foreach (var departmentId in additionalDepartmentIds)
+                {
+                    var department = await _context.Departments.FirstOrDefaultAsync(dep => dep.Id == departmentId);
+
+                    if (department == null)
+                    {
+                        continue;
+                    }
+
+                    worker.Departments.Add(department);
+                }
+
+                return NoContent();
+            }
         }
 
         // POST: api/Workers
