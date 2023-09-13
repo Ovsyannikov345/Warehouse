@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Warehouse.Models;
+using Warehouse.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

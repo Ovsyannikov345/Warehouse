@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography.Xml;
+using Warehouse.Models;
 
-namespace Warehouse.Models
+namespace Warehouse.Data
 {
     public class ApplicationContext : DbContext
     {

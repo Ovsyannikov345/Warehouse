@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.Intrinsics.Arm;
+using Warehouse.Data;
 using Warehouse.Models;
 
 namespace Warehouse.Controllers

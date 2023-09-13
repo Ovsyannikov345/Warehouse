@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Warehouse.Data;
 using Warehouse.Models;
 
 namespace Warehouse.Controllers
