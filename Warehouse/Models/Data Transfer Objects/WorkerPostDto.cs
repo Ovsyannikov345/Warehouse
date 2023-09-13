@@ -6,6 +6,6 @@
 
         public string LastName { get; set; } = "";
 
-        public List<Department> Departments { get; set; } = new();
+        public List<DepartmentIdDto> DepartmentIds { get; set; } = new();
     }
 }

@@ -124,7 +124,7 @@ namespace Warehouse.Controllers
 
         // POST: api/Workers
         [HttpPost]
-        public async Task<ActionResult<Worker>> PostWorker(WorkerPostDto worker)
+        public async Task<ActionResult<Worker>> PostWorker(WorkerPostDto workerDto)
         {
             if (_context.Workers == null)
             {
@@ -133,19 +133,19 @@ namespace Warehouse.Controllers
 
             var departments = _context.Departments;
 
-            Worker createdWorker = new Worker
+            Worker worker = new Worker
             {
-                FirstName = worker.FirstName,
-                LastName = worker.LastName,
-                Departments = worker.Departments.Select(dep => departments.FirstOrDefault(x => x.Id == dep.Id))
+                FirstName = workerDto.FirstName,
+                LastName = workerDto.LastName,
+                Departments = workerDto.DepartmentIds.Select(dep => departments.FirstOrDefault(x => x.Id == dep.Id))
                                                 .Where(dep => dep != null)
                                                 .ToList()!,
             };
 
-            _context.Workers.Add(createdWorker);
+            _context.Workers.Add(worker);
             await _context.SaveChangesAsync();
 
-            return Ok(worker);
+            return Ok(workerDto);
         }
 
         // DELETE: api/Workers/5
