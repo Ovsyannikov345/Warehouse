@@ -66,30 +66,25 @@ namespace Warehouse.Controllers
 
         // PUT: api/Products/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> PutProduct(int id, ProductPutDto productDto)
         {
-            if (id != product.Id)
+            if (id != productDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(product).State = EntityState.Modified;
+            var product = await _context.Products.Include(prod => prod.Department)
+                                                 .FirstOrDefaultAsync(prod => prod.Id ==  productDto.Id);
 
-            try
+            if (product == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
+            product.Name = productDto.Name;
+            product.DepartmentId = productDto.DepartmentId;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
