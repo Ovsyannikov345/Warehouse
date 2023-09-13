@@ -7,5 +7,7 @@
         public string Name { get; set; } = "";
 
         public List<WorkerIdDto> WorkerIds { get; set; } = new();
+
+        public List<ProductIdDto> ProductIds { get; set; } = new();
     }
 }

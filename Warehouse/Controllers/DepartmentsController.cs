@@ -103,29 +103,45 @@ namespace Warehouse.Controllers
 
             var workersIds = departmentDto.WorkerIds.Select(worker => worker.Id);
 
-            // Removing workers.
-            department.Workers.RemoveAll(worker => !workersIds.Contains(worker.Id));
+            await UpdateWorkers(department, workersIds);
 
-            // Adding workers.
-            var currentWorkerIds = department.Workers.Select(worker => worker.Id);
+            var productIds = departmentDto.ProductIds.Select(product => product.Id);
 
-            var additionalWorkersIds = workersIds.Except(currentWorkerIds);
-
-            foreach (var workerId in additionalWorkersIds)
-            {
-                var worker = _context.Workers.FirstOrDefault(worker => worker.Id == workerId);
-
-                if (worker == null)
-                {
-                    return NotFound();
-                }
-
-                department.Workers.Add(worker);
-            }
+            UpdateProducts(department, productIds);
 
             await _context.SaveChangesAsync();
 
             return NoContent();
+
+            async Task<IActionResult> UpdateWorkers(Department department, IEnumerable<int> workerIds)
+            {
+                // Removing workers.
+                department.Workers.RemoveAll(worker => !workerIds.Contains(worker.Id));
+
+                // Adding workers.
+                var currentWorkerIds = department.Workers.Select(worker => worker.Id);
+
+                var additionalWorkersIds = workerIds.Except(currentWorkerIds);
+
+                foreach (var workerId in additionalWorkersIds)
+                {
+                    var worker = await _context.Workers.FirstOrDefaultAsync(worker => worker.Id == workerId);
+
+                    if (worker == null)
+                    {
+                        continue;
+                    }
+
+                    department.Workers.Add(worker);
+                }
+
+                return NoContent();
+            }
+
+            void UpdateProducts(Department department, IEnumerable<int> productIds)
+            {
+                department.Products.RemoveAll(prod => !productIds.Contains(prod.Id));
+            }
         }
 
         // POST: api/Departments
