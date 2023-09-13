@@ -168,10 +168,5 @@ namespace Warehouse.Controllers
 
             return NoContent();
         }
-
-        private bool WorkerExists(int id)
-        {
-            return (_context.Workers?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
     }
 }
