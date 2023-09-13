@@ -83,30 +83,47 @@ namespace Warehouse.Controllers
 
         // PUT: api/Departments/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDepartment(int id, Department department)
+        public async Task<IActionResult> PutDepartment(int id, DepartmentPutDto departmentDto)
         {
-            if (id != department.Id)
+            if (id != departmentDto.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(department).State = EntityState.Modified;
+            var department = await _context.Departments.Include(dep => dep.Workers)
+                                                       .Include(dep => dep.Products)
+                                                       .FirstOrDefaultAsync(dep => dep.Id == id);
 
-            try
+            if (department == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
+
+            department.Name = departmentDto.Name;
+
+            var workersIds = departmentDto.WorkerIds.Select(worker => worker.Id);
+
+            // Removing workers.
+            department.Workers.RemoveAll(worker => !workersIds.Contains(worker.Id));
+
+            // Adding workers.
+            var currentWorkerIds = department.Workers.Select(worker => worker.Id);
+
+            var additionalWorkersIds = workersIds.Except(currentWorkerIds);
+
+            foreach (var workerId in additionalWorkersIds)
             {
-                if (!DepartmentExists(id))
+                var worker = _context.Workers.FirstOrDefault(worker => worker.Id == workerId);
+
+                if (worker == null)
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                department.Workers.Add(worker);
             }
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
